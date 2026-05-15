@@ -1,0 +1,173 @@
+import { PrismaClient } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('开始种子数据...');
+
+  // 创建街道
+  const streets = await Promise.all([
+    prisma.street.create({ data: { name: '城东街道', code: 'CD001', description: '城东片区' } }),
+    prisma.street.create({ data: { name: '城南街道', code: 'CN002', description: '城南片区' } }),
+    prisma.street.create({ data: { name: '城西街道', code: 'CX003', description: '城西片区' } }),
+    prisma.street.create({ data: { name: '城北街道', code: 'CB004', description: '城北片区' } }),
+    prisma.street.create({ data: { name: '市中心街道', code: 'SZX005', description: '市中心片区' } }),
+  ]);
+  console.log(`创建了 ${streets.length} 个街道`);
+
+  // 创建用户（密码统一为 123456）
+  const hashedPassword = await bcrypt.hash('123456', 10);
+  const users = await Promise.all([
+    prisma.sysUser.create({ data: { username: 'admin', password: hashedPassword, realName: '系统管理员', role: 'SUPER_ADMIN', phone: '13800000000', streetId: streets[4].id } }),
+    prisma.sysUser.create({ data: { username: 'operator1', password: hashedPassword, realName: '张运营', role: 'ADMIN', phone: '13800000001', streetId: streets[0].id } }),
+    prisma.sysUser.create({ data: { username: 'inspector1', password: hashedPassword, realName: '李检查', role: 'INSPECTOR', phone: '13800000002', streetId: streets[1].id } }),
+    prisma.sysUser.create({ data: { username: 'inspector2', password: hashedPassword, realName: '王检查', role: 'INSPECTOR', phone: '13800000003', streetId: streets[2].id } }),
+    prisma.sysUser.create({ data: { username: 'screener1', password: hashedPassword, realName: '赵排查', role: 'SCREENER', phone: '13800000004', streetId: streets[3].id } }),
+    prisma.sysUser.create({ data: { username: 'operator2', password: hashedPassword, realName: '刘经营', role: 'OPERATOR', phone: '13800000005', streetId: streets[0].id } }),
+    prisma.sysUser.create({ data: { username: 'operator3', password: hashedPassword, realName: '陈经营', role: 'OPERATOR', phone: '13800000006', streetId: streets[1].id } }),
+    prisma.sysUser.create({ data: { username: 'consumer1', password: hashedPassword, realName: '周消费者', role: 'CONSUMER', phone: '13800000007' } }),
+  ]);
+  console.log(`创建了 ${users.length} 个用户`);
+
+  // 创建经营主体
+  const entities = await Promise.all([
+    prisma.bizEntity.create({ data: { name: '城东小吃店', licenseNo: 'CY-2024-0001', address: '城东街道123号', entityType: 'CATERING', streetId: streets[0].id, legalRep: '张三', contactPhone: '13900000001', riskLevel: 'LOW' } }),
+    prisma.bizEntity.create({ data: { name: '城南超市', licenseNo: 'CY-2024-0002', address: '城南街道456号', entityType: 'RETAIL', streetId: streets[1].id, legalRep: '李四', contactPhone: '13900000002', riskLevel: 'MEDIUM' } }),
+    prisma.bizEntity.create({ data: { name: '城西食品厂', licenseNo: 'CY-2024-0003', address: '城西街道789号', entityType: 'PRODUCTION', streetId: streets[2].id, legalRep: '王五', contactPhone: '13900000003', riskLevel: 'HIGH' } }),
+    prisma.bizEntity.create({ data: { name: '城北快餐店', licenseNo: 'CY-2024-0004', address: '城北街道101号', entityType: 'CATERING', streetId: streets[3].id, legalRep: '赵六', contactPhone: '13900000004', riskLevel: 'LOW' } }),
+    prisma.bizEntity.create({ data: { name: '市中心酒店', licenseNo: 'CY-2024-0005', address: '市中心街道202号', entityType: 'CATERING', streetId: streets[4].id, legalRep: '钱七', contactPhone: '13900000005', riskLevel: 'MEDIUM' } }),
+    prisma.bizEntity.create({ data: { name: '城东便利店', licenseNo: 'CY-2024-0006', address: '城东街道303号', entityType: 'RETAIL', streetId: streets[0].id, legalRep: '孙八', contactPhone: '13900000006', riskLevel: 'LOW' } }),
+    prisma.bizEntity.create({ data: { name: '城南面包房', licenseNo: 'CY-2024-0007', address: '城南街道404号', entityType: 'CATERING', streetId: streets[1].id, legalRep: '周九', contactPhone: '13900000007', riskLevel: 'LOW' } }),
+    prisma.bizEntity.create({ data: { name: '城西农资店', licenseNo: 'CY-2024-0008', address: '城西街道505号', entityType: 'RETAIL', streetId: streets[2].id, legalRep: '吴十', contactPhone: '13900000008', riskLevel: 'MEDIUM' } }),
+    prisma.bizEntity.create({ data: { name: '城北食品加工厂', licenseNo: 'CY-2024-0009', address: '城北街道606号', entityType: 'PRODUCTION', streetId: streets[3].id, legalRep: '郑十一', contactPhone: '13900000009', riskLevel: 'HIGH' } }),
+    prisma.bizEntity.create({ data: { name: '市中心药店', licenseNo: 'CY-2024-0010', address: '市中心街道707号', entityType: 'RETAIL', streetId: streets[4].id, legalRep: '王十二', contactPhone: '13900000010', riskLevel: 'LOW' } }),
+  ]);
+  console.log(`创建了 ${entities.length} 个经营主体`);
+
+  // 创建检查模板
+  const templates = await Promise.all([
+    prisma.inspectionTemplate.create({
+      data: {
+        name: '餐饮服务日常检查模板',
+        type: 'ROUTINE',
+        description: '适用于餐饮服务单位的日常监督检查',
+        version: '1.0',
+        items: {
+          create: [
+            { content: '从业人员健康证明是否有效', itemType: 'BOOLEAN', required: true, sortOrder: 1 },
+            { content: '食品原材料采购查验记录是否完整', itemType: 'BOOLEAN', required: true, sortOrder: 2 },
+            { content: '食品加工场所卫生状况', itemType: 'SCORE', required: true, sortOrder: 3 },
+            { content: '餐具消毒记录是否完整', itemType: 'BOOLEAN', required: false, sortOrder: 4 },
+            { content: '食品留样是否符合要求', itemType: 'BOOLEAN', required: false, sortOrder: 5 },
+          ]
+        },
+        createdById: users[0].id,
+      }
+    }),
+    prisma.inspectionTemplate.create({
+      data: {
+        name: '食品销售日常检查模板',
+        type: 'ROUTINE',
+        description: '适用于食品销售单位的日常监督检查',
+        version: '1.0',
+        items: {
+          create: [
+            { content: '食品进货查验记录是否完整', itemType: 'BOOLEAN', required: true, sortOrder: 1 },
+            { content: '食品储存条件是否符合要求', itemType: 'SCORE', required: true, sortOrder: 2 },
+            { content: '临近保质期食品管理是否规范', itemType: 'BOOLEAN', required: true, sortOrder: 3 },
+            { content: '食品安全管理员是否在岗', itemType: 'BOOLEAN', required: false, sortOrder: 4 },
+          ]
+        },
+        createdById: users[0].id,
+      }
+    }),
+    prisma.inspectionTemplate.create({
+      data: {
+        name: '食品生产专项检查模板',
+        type: 'SPECIAL',
+        description: '适用于食品生产企业的专项监督检查',
+        version: '1.0',
+        items: {
+          create: [
+            { content: '生产场所卫生状况', itemType: 'SCORE', required: true, sortOrder: 1 },
+            { content: '生产设备维护保养记录', itemType: 'BOOLEAN', required: true, sortOrder: 2 },
+            { content: '出厂检验记录是否完整', itemType: 'BOOLEAN', required: true, sortOrder: 3 },
+            { content: '不合格品处理记录', itemType: 'BOOLEAN', required: false, sortOrder: 4 },
+            { content: '食品安全自查记录', itemType: 'BOOLEAN', required: true, sortOrder: 5 },
+          ]
+        },
+        createdById: users[0].id,
+      }
+    }),
+  ]);
+  console.log(`创建了 ${templates.length} 个检查模板`);
+
+  // 创建检查计划
+  const plans = await Promise.all([
+    prisma.inspectionPlan.create({
+      data: {
+        title: '2026年5月城东街道餐饮单位例行检查',
+        type: 'ROUTINE',
+        status: 'ACTIVE',
+        startDate: new Date('2026-05-01'),
+        endDate: new Date('2026-05-31'),
+        streetId: streets[0].id,
+        templateId: templates[0].id,
+        assignments: {
+          create: [
+            { userId: users[2].id, entityId: entities[0].id },
+            { userId: users[2].id, entityId: entities[5].id },
+          ]
+        },
+        createdById: users[1].id,
+      }
+    }),
+    prisma.inspectionPlan.create({
+      data: {
+        title: '2026年5月城南街道食品销售单位抽查',
+        type: 'SPECIAL',
+        status: 'DRAFT',
+        startDate: new Date('2026-05-10'),
+        endDate: new Date('2026-05-25'),
+        streetId: streets[1].id,
+        templateId: templates[1].id,
+        assignments: {
+          create: [
+            { userId: users[3].id, entityId: entities[1].id },
+            { userId: users[3].id, entityId: entities[6].id },
+          ]
+        },
+        createdById: users[1].id,
+      }
+    }),
+  ]);
+  console.log(`创建了 ${plans.length} 个检查计划`);
+
+  // 创建检查任务（从计划生成）
+  for (const plan of plans) {
+    const assignments = await prisma.inspectionAssignment.findMany({ where: { planId: plan.id } });
+    for (const assignment of assignments) {
+      await prisma.inspectionTask.create({
+        data: {
+          planId: plan.id,
+          entityId: assignment.entityId,
+          inspectorId: assignment.userId,
+          status: 'PENDING',
+          assignedAt: new Date(),
+        }
+      });
+    }
+  }
+  console.log('检查任务已创建');
+
+  console.log('种子数据创建完成！');
+  console.log('登录信息：');
+  console.log('管理员: admin / 123456');
+  console.log('检查员: inspector1 / 123456');
+  console.log('经营者: operator1 / 123456');
+}
+
+main()
+  .catch(e => { console.error(e); process.exit(1); })
+  .finally(async () => { await prisma.$disconnect(); });

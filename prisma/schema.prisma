@@ -1,0 +1,721 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ==================== 枚举 ====================
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  INSPECTOR
+  SCREENER
+  OPERATOR
+  CONSUMER
+}
+
+enum UserStatus {
+  ACTIVE
+  DISABLED
+}
+
+enum EntityType {
+  RESTAURANT
+  CANTEEN
+  WORKSHOP
+  SUPERMARKET
+  CONVENIENCE
+  WHOLESALE
+  OTHER
+}
+
+enum EntityStatus {
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum RiskLevel {
+  UNRATED
+  LOW
+  LOWER
+  MEDIUM
+  HIGHER
+  HIGH
+}
+
+enum InspectionType {
+  ROUTINE
+  SPECIAL
+  LICENSE
+}
+
+enum InspectionResult {
+  PASS
+  ISSUE
+  FAIL
+}
+
+enum ItemResult {
+  PASS
+  FAIL
+  NA
+}
+
+enum TaskStatus {
+  ASSIGNED
+  ACCEPTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
+enum PlanStatus {
+  DRAFT
+  PUBLISHED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum RectificationLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum RectificationStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  REJECTED
+  OVERDUE
+}
+
+enum ComplaintCategory {
+  FOOD_SAFETY
+  SERVICE
+  HYGIENE
+  OTHER
+}
+
+enum ComplaintStatus {
+  PENDING
+  FIRST_HANDLING
+  FIRST_FEEDBACK
+  SECOND_HANDLING
+  SECOND_FEEDBACK
+  RESOLVED
+  CLOSED
+}
+
+enum Satisfaction {
+  SATISFIED
+  BASICALLY_SATISFIED
+  DISSATISFIED
+  NEED_INTERVENTION
+}
+
+enum ActivityType {
+  VOTE
+  SUGGESTION
+  PROMOTION
+  SURVEY
+}
+
+enum ActivityStatus {
+  DRAFT
+  PUBLISHED
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum LicenseType {
+  FOOD_BUSINESS
+  FOOD_PRODUCTION
+  FOOD_CIRCULATION
+  CATERING
+  RECORD
+}
+
+enum LicenseStatus {
+  VALID
+  EXPIRED
+  REVOKED
+}
+
+enum PhotoCategory {
+  STORE_SCENE
+  BUSINESS_NORM
+  INSPECTION_SCENE
+  ACTIVITY
+}
+
+enum SelfInspectionType {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum FeedbackCategory {
+  SUGGESTION
+  BUG
+  FEATURE
+  OTHER
+}
+
+enum NotificationType {
+  INSPECTION
+  RECTIFICATION
+  COMPLAINT
+  ACTIVITY
+  SYSTEM
+}
+
+// ==================== 模型 ====================
+
+model Street {
+  id        String   @id @default(cuid())
+  name      String   @db.VarChar(100)
+  code      String?  @unique @db.VarChar(20)
+  district  String?  @db.VarChar(50)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    SysUser[]
+  entities BizEntity[]
+
+  @@map("streets")
+}
+
+model SysUser {
+  id          String     @id @default(cuid())
+  username    String     @unique @db.VarChar(50)
+  password    String     @db.VarChar(255)
+  realName    String?    @db.VarChar(50)
+  phone       String?    @unique @db.VarChar(20)
+  role        UserRole   @default(CONSUMER)
+  status      UserStatus @default(ACTIVE)
+  avatar      String?    @db.VarChar(500)
+  lastLoginAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  streetId String?    @db.VarChar(30)
+  street   Street?    @relation(fields: [streetId], references: [id])
+  entityId String?    @db.VarChar(30)
+  entity   BizEntity? @relation("EntityOperators", fields: [entityId], references: [id])
+
+  inspectionRecords  InspectionRecord[]
+  inspectionTasks    InspectionTask[]
+  screeningRecords   ScreeningRecord[]
+  complaintHandles   ComplaintHandle[]
+  selfInspections    SelfInspection[]
+  infoCorrections    InfoCorrection[]
+    feedbackSubmissions Feedback[] @relation("FeedbackSubmitter")
+  feedbackReplies    Feedback[] @relation("FeedbackReplier")
+  notifications      Notification[]
+  createdPlans       InspectionPlan[]     @relation("PlanCreator")
+  createdScreenPlans ScreeningPlan[]      @relation("ScreeningPlanCreator")
+  createdTemplates   InspectionTemplate[] @relation("TemplateCreator")
+  createdActivities  Activity[]           @relation("ActivityCreator")
+  createdEntities    BizEntity[]          @relation("EntityCreator")
+  auditLogs          AuditLog[]
+
+  @@map("sys_users")
+}
+
+model BizEntity {
+  id                  String       @id @default(cuid())
+  creditCode          String?      @unique @db.VarChar(18)
+  name                String       @db.VarChar(200)
+  type                EntityType
+  legalPerson         String?      @db.VarChar(50)
+  address             String?      @db.VarChar(500)
+  streetId            String?      @db.VarChar(30)
+  street              Street?      @relation(fields: [streetId], references: [id])
+  businessScope       String?      @db.VarChar(500)
+  establishedAt       DateTime?
+  riskLevel           RiskLevel    @default(UNRATED)
+  riskScore           Int          @default(0)
+  riskRatedAt         DateTime?
+  guaranteeLevel      String?      @db.VarChar(20)
+  safetyDirector      String?      @db.VarChar(50)
+  safetyOfficer       String?      @db.VarChar(50)
+  guaranteeCadre      String?      @db.VarChar(50)
+  guaranteeCadreTitle String?      @db.VarChar(50)
+  status              EntityStatus @default(ACTIVE)
+  qrCode              String?      @unique @db.VarChar(50)
+  createdBy           String?      @db.VarChar(30)
+  creator             SysUser?     @relation("EntityCreator", fields: [createdBy], references: [id])
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  operators         SysUser[]          @relation("EntityOperators")
+  licenses          BizLicense[]
+  photos            EntityPhoto[]
+  qrCodeRecord      QRCode?
+  inspectionTasks   InspectionTask[]
+  inspectionRecords InspectionRecord[]
+  screeningRecords  ScreeningRecord[]
+  complaints        Complaint[]
+  selfInspections   SelfInspection[]
+  infoCorrections   InfoCorrection[]
+  rectifications    Rectification[]
+  scanRecords       QrScanRecord[]
+
+  @@index([streetId])
+  @@index([type])
+  @@index([riskLevel])
+  @@map("biz_entities")
+}
+
+model BizLicense {
+  id                   String        @id @default(cuid())
+  entityId             String        @db.VarChar(30)
+  entity               BizEntity     @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  licenseType          LicenseType
+  licenseNo            String?       @db.VarChar(50)
+  licenseContent       String?       @db.VarChar(500)
+  validFrom            DateTime?
+  validTo              DateTime?
+  licensePhoto         String?       @db.VarChar(500)
+  businessLicensePhoto String?       @db.VarChar(500)
+  status               LicenseStatus @default(VALID)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([entityId])
+  @@map("biz_licenses")
+}
+
+model EntityPhoto {
+  id          String        @id @default(cuid())
+  entityId    String        @db.VarChar(30)
+  entity      BizEntity     @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  category    PhotoCategory
+  url         String        @db.VarChar(500)
+  description String?       @db.VarChar(200)
+  createdAt   DateTime      @default(now())
+
+  @@index([entityId])
+  @@map("biz_entity_photos")
+}
+
+model QRCode {
+  id        String    @id @default(cuid())
+  entityId  String    @unique @db.VarChar(30)
+  entity    BizEntity @relation(fields: [entityId], references: [id], onDelete: Cascade)
+  code      String    @unique @db.VarChar(20)
+  scanCount Int       @default(0)
+  imageUrl  String?   @db.VarChar(500)
+  status    String    @default("ACTIVE") @db.VarChar(20)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  scanRecords QrScanRecord[]
+
+  @@map("biz_qrcodes")
+}
+
+model QrScanRecord {
+  id          String   @id @default(cuid())
+  qrcodeId    String   @db.VarChar(30)
+  qrcode      QRCode   @relation(fields: [qrcodeId], references: [id], onDelete: Cascade)
+  entityId    String   @db.VarChar(30)
+  entity      BizEntity @relation(fields: [entityId], references: [id])
+  scannerType String   @default("CONSUMER") @db.VarChar(20) // CONSUMER, INSPECTOR, SCREENER, OPERATOR
+  scannerName String?  @db.VarChar(100)           // 扫码人姓名（未登录时可为空）
+  scannerId   String?  @db.VarChar(30)            // 登录用户ID
+  latitude    Float?   // 纬度
+  longitude   Float?   // 经度
+  location    String?  @db.VarChar(200)          // 地址描述
+  action      String   @default("VIEW") @db.VarChar(20) // VIEW(查看), VERIFY(核销), REPORT(举报)
+  remark      String?  @db.VarChar(500)
+  createdAt   DateTime @default(now())
+
+  @@index([qrcodeId])
+  @@index([entityId])
+  @@index([scannerType])
+  @@map("biz_qr_scan_records")
+}
+
+model InspectionTemplate {
+  id              String         @id @default(cuid())
+  name            String         @db.VarChar(200)
+  type            InspectionType
+  description     String?        @db.VarChar(500)
+  applicableTypes String?        @db.Text
+  legalBasis      String?        @db.VarChar(500)
+  status          String         @default("ACTIVE") @db.VarChar(20)
+  createdBy       String?        @db.VarChar(30)
+  creator         SysUser?       @relation("TemplateCreator", fields: [createdBy], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  items InspectionTemplateItem[]
+  plans InspectionPlan[]
+
+  @@map("biz_inspection_templates")
+}
+
+model InspectionTemplateItem {
+  id           String             @id @default(cuid())
+  templateId   String             @db.VarChar(30)
+  template     InspectionTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  category     String?            @db.VarChar(100)
+  name         String             @db.VarChar(200)
+  content      String?            @db.VarChar(500)
+  lawReference String?            @db.VarChar(500)
+  required     Boolean            @default(true)
+  sortOrder    Int                @default(0)
+
+  @@index([templateId])
+  @@map("biz_inspection_template_items")
+}
+
+model InspectionPlan {
+  id          String              @id @default(cuid())
+  name        String              @db.VarChar(200)
+  type        InspectionType
+  templateId  String?             @db.VarChar(30)
+  template    InspectionTemplate? @relation(fields: [templateId], references: [id])
+  legalBasis  String?             @db.VarChar(500)
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?             @db.VarChar(500)
+  status      PlanStatus          @default(DRAFT)
+  riskFilter  String?             @db.Text
+  createdBy   String?             @db.VarChar(30)
+  creator     SysUser?            @relation("PlanCreator", fields: [createdBy], references: [id])
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  tasks InspectionTask[]
+
+  @@map("biz_inspection_plans")
+}
+
+model InspectionTask {
+  id            String         @id @default(cuid())
+  planId        String         @db.VarChar(30)
+  plan          InspectionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  entityId      String         @db.VarChar(30)
+  entity        BizEntity      @relation(fields: [entityId], references: [id])
+  inspectorId   String         @db.VarChar(30)
+  inspector     SysUser        @relation(fields: [inspectorId], references: [id])
+  status        TaskStatus     @default(ASSIGNED)
+  scheduledDate DateTime?
+  completedAt   DateTime?
+  notes         String?        @db.VarChar(500)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  record InspectionRecord?
+
+  @@index([planId])
+  @@index([inspectorId])
+  @@index([entityId])
+  @@map("biz_inspection_tasks")
+}
+
+model InspectionRecord {
+  id          String           @id @default(cuid())
+  taskId      String           @unique @db.VarChar(30)
+  task        InspectionTask   @relation(fields: [taskId], references: [id])
+  planId      String?          @db.VarChar(30)
+  entityId    String           @db.VarChar(30)
+  entity      BizEntity        @relation(fields: [entityId], references: [id])
+  inspectorId String           @db.VarChar(30)
+  inspector   SysUser          @relation(fields: [inspectorId], references: [id])
+  result      InspectionResult
+  totalScore  Int              @default(100)
+  issueCount  Int              @default(0)
+  summary     String?          @db.VarChar(500)
+  location    String?          @db.VarChar(200)
+  photos      String?          @db.Text
+  inspectedAt DateTime         @default(now())
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  itemResults    InspectionItemResult[]
+  rectifications Rectification[]
+
+  @@index([entityId])
+  @@index([planId])
+  @@map("biz_inspection_records")
+}
+
+model InspectionItemResult {
+  id             String           @id @default(cuid())
+  recordId       String           @db.VarChar(30)
+  record         InspectionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  templateItemId String?          @db.VarChar(30)
+  result         ItemResult
+  remark         String?          @db.VarChar(500)
+  photos         String?          @db.Text
+  sortOrder      Int              @default(0)
+
+  @@index([recordId])
+  @@map("biz_inspection_item_results")
+}
+
+model Rectification {
+  id                String              @id @default(cuid())
+  recordId          String              @db.VarChar(30)
+  record            InspectionRecord    @relation(fields: [recordId], references: [id])
+  entityId          String              @db.VarChar(30)
+  entity            BizEntity           @relation(fields: [entityId], references: [id])
+  description       String              @db.VarChar(500)
+  deadline          DateTime?
+  level             RectificationLevel  @default(LOW)
+  status            RectificationStatus @default(PENDING)
+  submitDescription String?             @db.VarChar(500)
+  submitPhotos      String?             @db.Text
+  submittedAt       DateTime?
+  reviewerId        String?             @db.VarChar(30)
+  reviewResult      String?             @db.VarChar(20)
+  reviewRemark      String?             @db.VarChar(500)
+  reviewedAt        DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([entityId])
+  @@index([status])
+  @@map("biz_rectifications")
+}
+
+model ScreeningPlan {
+  id          String     @id @default(cuid())
+  name        String     @db.VarChar(200)
+  type        String     @default("STREET_SWEEP") @db.VarChar(30)
+  content     String?    @db.VarChar(500)
+  startDate   DateTime?
+  endDate     DateTime?
+  assignMode  String     @default("MANUAL") @db.VarChar(20)
+  screenerIds String?    @db.Text
+  entityIds   String?    @db.Text
+  status      PlanStatus @default(DRAFT)
+  createdBy   String?    @db.VarChar(30)
+  creator     SysUser?   @relation("ScreeningPlanCreator", fields: [createdBy], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  records ScreeningRecord[]
+
+  @@map("biz_screening_plans")
+}
+
+model ScreeningRecord {
+  id           String         @id @default(cuid())
+  planId       String?        @db.VarChar(30)
+  plan         ScreeningPlan? @relation(fields: [planId], references: [id])
+  entityId     String         @db.VarChar(30)
+  entity       BizEntity      @relation(fields: [entityId], references: [id])
+  screenerId   String         @db.VarChar(30)
+  screener     SysUser        @relation(fields: [screenerId], references: [id])
+  infoVerified Boolean        @default(false)
+  riskLevel    RiskLevel?
+  issues       String?        @db.Text
+  photos       String?        @db.Text
+  notes        String?        @db.VarChar(500)
+  screenedAt   DateTime       @default(now())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([planId])
+  @@index([screenerId])
+  @@map("biz_screening_records")
+}
+
+model Complaint {
+  id            String            @id @default(cuid())
+  entityId      String?           @db.VarChar(30)
+  entity        BizEntity?        @relation(fields: [entityId], references: [id])
+  category      ComplaintCategory
+  content       String            @db.VarChar(2000)
+  evidence      String?           @db.Text
+  isAnonymous   Boolean           @default(false)
+  reporterName  String?           @db.VarChar(50)
+  reporterPhone String?           @db.VarChar(20)
+  status        ComplaintStatus   @default(PENDING)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  handles   ComplaintHandle[]
+  feedbacks ComplaintFeedback[]
+
+  @@index([entityId])
+  @@index([status])
+  @@map("biz_complaints")
+}
+
+model ComplaintHandle {
+  id          String    @id @default(cuid())
+  complaintId String    @db.VarChar(30)
+  complaint   Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  handlerId   String    @db.VarChar(30)
+  handler     SysUser   @relation(fields: [handlerId], references: [id])
+  handleType  String    @db.VarChar(20)
+  result      String    @db.VarChar(1000)
+  photos      String?   @db.Text
+  handledAt   DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  @@index([complaintId])
+  @@map("biz_complaint_handles")
+}
+
+model ComplaintFeedback {
+  id           String       @id @default(cuid())
+  complaintId  String       @db.VarChar(30)
+  complaint    Complaint    @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  handleId     String?      @db.VarChar(30)
+  feedbackType String       @db.VarChar(20)
+  satisfaction Satisfaction
+  remark       String?      @db.VarChar(500)
+  createdAt    DateTime     @default(now())
+
+  @@index([complaintId])
+  @@map("biz_complaint_feedbacks")
+}
+
+model Activity {
+  id             String         @id @default(cuid())
+  name           String         @db.VarChar(200)
+  type           ActivityType
+  description    String?        @db.VarChar(1000)
+  config         String?        @db.Text
+  startDate      DateTime?
+  endDate        DateTime?
+  status         ActivityStatus @default(DRAFT)
+  targetAudience String         @default("ALL") @db.VarChar(20)
+  createdBy      String?        @db.VarChar(30)
+  creator        SysUser?       @relation("ActivityCreator", fields: [createdBy], references: [id])
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  participants ActivityParticipant[]
+
+  @@map("biz_activities")
+}
+
+model ActivityParticipant {
+  id               String   @id @default(cuid())
+  activityId       String   @db.VarChar(30)
+  activity         Activity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  userId           String?  @db.VarChar(30)
+  participantName  String?  @db.VarChar(50)
+  participantPhone String?  @db.VarChar(20)
+  content          String?  @db.Text
+  createdAt        DateTime @default(now())
+
+  @@index([activityId])
+  @@map("biz_activity_participants")
+}
+
+model InfoCorrection {
+  id           String    @id @default(cuid())
+  entityId     String    @db.VarChar(30)
+  entity       BizEntity @relation(fields: [entityId], references: [id])
+  submittedBy  String    @db.VarChar(30)
+  submitter    SysUser   @relation(fields: [submittedBy], references: [id])
+  field        String    @db.VarChar(100)
+  oldValue     String?   @db.VarChar(500)
+  newValue     String    @db.VarChar(500)
+  evidence     String?   @db.Text
+  reason       String?   @db.VarChar(500)
+  status       String    @default("PENDING") @db.VarChar(20)
+  reviewerId   String?   @db.VarChar(30)
+  reviewRemark String?   @db.VarChar(500)
+  reviewedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([entityId])
+  @@index([status])
+  @@map("biz_info_corrections")
+}
+
+model SelfInspection {
+  id          String             @id @default(cuid())
+  entityId    String             @db.VarChar(30)
+  entity      BizEntity          @relation(fields: [entityId], references: [id])
+  operatorId  String             @db.VarChar(30)
+  operator    SysUser            @relation(fields: [operatorId], references: [id])
+  type        SelfInspectionType
+  items       String?            @db.Text
+  issues      String?            @db.Text
+  result      String             @default("PASS") @db.VarChar(20)
+  photos      String?            @db.Text
+  inspectedAt DateTime           @default(now())
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([entityId])
+  @@index([operatorId])
+  @@map("biz_self_inspections")
+}
+
+model Feedback {
+  id        String           @id @default(cuid())
+  userId    String?          @db.VarChar(30)
+  user      SysUser?         @relation("FeedbackSubmitter", fields: [userId], references: [id])
+  category  FeedbackCategory
+  content   String           @db.VarChar(1000)
+  contact   String?          @db.VarChar(100)
+  status    String           @default("PENDING") @db.VarChar(20)
+  reply     String?          @db.VarChar(500)
+  repliedBy String?          @db.VarChar(30)
+  replier   SysUser?         @relation("FeedbackReplier", fields: [repliedBy], references: [id])
+  repliedAt DateTime?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@map("biz_feedback")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  userId      String           @db.VarChar(30)
+  user        SysUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String           @db.VarChar(200)
+  content     String?          @db.VarChar(1000)
+  type        NotificationType
+  relatedId   String?          @db.VarChar(30)
+  relatedType String?          @db.VarChar(50)
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([type])
+  @@map("sys_notifications")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?  @db.VarChar(30)
+  user        SysUser? @relation(fields: [userId], references: [id])
+  action      String   @db.VarChar(20)      // CREATE, UPDATE, DELETE, LOGIN, LOGOUT, etc.
+  module      String   @db.VarChar(50)      // 模块名: entities, inspections, etc.
+  targetId    String?  @db.VarChar(30)      // 操作对象ID
+  targetType  String?  @db.VarChar(50)      // 操作对象类型
+  detail      String?  @db.Text             // 详细信息(JSON)
+  ip          String?  @db.VarChar(45)      // IP地址(支持IPv6)
+  userAgent   String?  @db.VarChar(500)     // 浏览器UA
+  status      String   @default("SUCCESS") @db.VarChar(20) // SUCCESS, FAILED
+  errorMsg    String?  @db.VarChar(500)     // 错误信息
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([createdAt])
+  @@map("sys_audit_logs")
+}
