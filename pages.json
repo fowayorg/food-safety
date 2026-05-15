@@ -1,0 +1,119 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "首页",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/login/login",
+      "style": {
+        "navigationBarTitleText": "登录",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/entity/detail",
+      "style": {
+        "navigationBarTitleText": "经营主体信息",
+        "enablePullDownRefresh": false
+      }
+    },
+    {
+      "path": "pages/inspection/list",
+      "style": {
+        "navigationBarTitleText": "检查任务"
+      }
+    },
+    {
+      "path": "pages/inspection/execute",
+      "style": {
+        "navigationBarTitleText": "执行检查"
+      }
+    },
+    {
+      "path": "pages/complaint/submit",
+      "style": {
+        "navigationBarTitleText": "投诉举报"
+      }
+    },
+    {
+      "path": "pages/complaint/list",
+      "style": {
+        "navigationBarTitleText": "我的投诉"
+      }
+    },
+    {
+      "path": "pages/self-inspection/list",
+      "style": {
+        "navigationBarTitleText": "自查自纠"
+      }
+    },
+    {
+      "path": "pages/self-inspection/execute",
+      "style": {
+        "navigationBarTitleText": "执行自查"
+      }
+    },
+    {
+      "path": "pages/activity/list",
+      "style": {
+        "navigationBarTitleText": "共治活动"
+      }
+    },
+    {
+      "path": "pages/activity/detail",
+      "style": {
+        "navigationBarTitleText": "活动详情"
+      }
+    },
+    {
+      "path": "pages/notification/list",
+      "style": {
+        "navigationBarTitleText": "我的消息"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人中心"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "一店一码",
+    "navigationBarBackgroundColor": "#F8F8F8",
+    "backgroundColor": "#F8F8F8"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#1976D2",
+    "borderStyle": "black",
+    "backgroundColor": "#ffffff",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/inspection/list",
+        "text": "检查"
+      },
+      {
+        "pagePath": "pages/complaint/list",
+        "text": "投诉"
+      },
+      {
+        "pagePath": "pages/notification/list",
+        "text": "消息"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
+  }
+}
