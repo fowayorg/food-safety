@@ -113,4 +113,12 @@ export class InspectionPlansService {
     const completed = tasks.filter((t) => t.status === 'COMPLETED').length;
     return { total, assigned, inProgress, completed, completionRate: total ? Math.round((completed / total) * 100) : 0 };
   }
+
+  async getMyTasks(inspectorId: string, status?: string) {
+    return this.prisma.inspectionTask.findMany({
+      where: { inspectorId, ...(status ? { status: status as any } : {}) },
+      include: { entity: true, plan: true, record: true },
+      orderBy: { scheduledDate: 'asc' },
+    });
+  }
 }

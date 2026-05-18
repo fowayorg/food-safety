@@ -18,8 +18,12 @@ export class UsersController {
   @Get()
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: '用户列表' })
-  findAll(@Query('page') page?: number, @Query('pageSize') pageSize?: number, @Query('role') role?: string) {
-    return this.usersService.findAll(page, pageSize, role);
+  findAll(@Query('page') page?: string, @Query('pageSize') pageSize?: string, @Query('role') role?: string) {
+    return this.usersService.findAll(
+      parseInt(page as string || '1', 10),
+      parseInt(pageSize as string || '10', 10),
+      role,
+    );
   }
 
   @Get('inspectors')

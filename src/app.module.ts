@@ -21,8 +21,10 @@ import { FeedbackModule } from './modules/feedback/feedback.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { RectificationsModule } from './modules/rectifications/rectifications.module';
+import { LicensesModule } from './modules/licenses/licenses.module';
 import { QrScansModule } from './modules/qr-scans/qr-scans.module';
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
+import { ExportsModule } from './modules/exports/exports.module';
 import { CustomThrottlerGuard } from './common/guards/throttler.guard';
 import { AuditInterceptor } from './common/interceptors/audit.interceptor';
 
@@ -61,8 +63,10 @@ import { AuditInterceptor } from './common/interceptors/audit.interceptor';
     NotificationsModule,
     ReportsModule,
     RectificationsModule,
+    LicensesModule,
     QrScansModule,
     AuditLogsModule,
+    ExportsModule,
   ],
   providers: [
     // 全局限流守卫（通过依赖注入注册）

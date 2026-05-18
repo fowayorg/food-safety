@@ -123,7 +123,11 @@ export class ReportsService {
       await Promise.all([
         this.prisma.bizEntity.count(),
         this.prisma.inspectionRecord.count(),
-        this.prisma.complaint.count({ where: { status: 'PENDING' } }),
+        this.prisma.complaint.count({
+          where: {
+            status: { notIn: ['RESOLVED', 'CLOSED'] },
+          },
+        }),
         this.prisma.inspectionTask.count({ where: { status: 'ASSIGNED' } }),
       ]);
 

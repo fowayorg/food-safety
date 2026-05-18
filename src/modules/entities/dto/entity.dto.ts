@@ -35,6 +35,16 @@ export class UpdateEntityDto {
   @IsEnum(RiskLevel) @IsOptional() riskLevel?: RiskLevel;
 }
 
+export class UpdateLicenseDto {
+  @IsString() @IsOptional() licenseType?: any;
+  @IsString() @IsOptional() licenseNo?: string;
+  @IsString() @IsOptional() licenseContent?: string;
+  @IsDateString() @IsOptional() validFrom?: string;
+  @IsDateString() @IsOptional() validTo?: string;
+  @IsString() @IsOptional() licensePhoto?: string;
+  @IsString() @IsOptional() businessLicensePhoto?: string;
+}
+
 export class CreateLicenseDto {
   @ApiProperty({ description: '许可类型' }) @IsNotEmpty() licenseType: any;
   @IsString() @IsOptional() licenseNo?: string;

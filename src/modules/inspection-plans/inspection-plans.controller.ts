@@ -106,6 +106,14 @@ export class InspectionPlansController {
     return this.service.assignTasks(id, body.tasks);
   }
 
+  @Get('my')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.INSPECTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: '我的检查任务' })
+  findMy(@CurrentUser() user: any, @Query('status') status?: string) {
+    return this.service.getMyTasks(user.userId || user.sub, status);
+  }
+
   @Get(':id/tasks')
   @ApiOperation({ summary: '计划下任务列表' })
   getTasks(@Param('id') id: string, @Query('status') status?: string) {

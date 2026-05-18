@@ -77,22 +77,39 @@ export class ActivitiesService {
     if (activity.status !== 'DRAFT' && activity.status !== 'CANCELLED') {
       throw new BadRequestException('只能发布草稿或已取消的活动');
     }
+    const newStatus = activity.startDate && new Date(activity.startDate) > new Date() ? 'PUBLISHED' : 'ACTIVE';
     const updated = await this.prisma.activity.update({
       where: { id },
-      data: { status: 'ACTIVE' },
+      data: { status: newStatus },
       include: { creator: true },
     });
-    // Auto-create notification for activity publication
+
+    // Activity type label map
+    const typeMap: Record<string, string> = { VOTE: '投票活动', SUGGESTION: '意见建议', PROMOTION: '促销活动', SURVEY: '问卷调查' };
+    const typeLabel = typeMap[activity.type] || activity.type;
+
+    // Auto-create notification filtered by targetAudience
+    const audienceMap: Record<string, any> = {
+      ALL: {},
+      OPERATOR: { role: 'OPERATOR' },
+      CONSUMER: { role: 'CONSUMER' },
+    };
+    const audienceFilter = audienceMap[activity.targetAudience] || {};
     const users = await this.prisma.sysUser.findMany({
-      where: { status: 'ACTIVE' },
+      where: { status: 'ACTIVE', ...audienceFilter },
       select: { id: true },
     });
+
+    const startInfo = activity.startDate ? `，开始时间：${new Date(activity.startDate).toLocaleDateString('zh-CN')}` : '';
+    const notifTitle = `【${typeLabel}】${activity.name}`;
+    const notifContent = activity.description || `您有一条新的${typeLabel}等待参与${startInfo}。`;
+
     for (const u of users) {
       await this.prisma.notification.create({
         data: {
           userId: u.id,
-          title: `新活动: ${activity.name}`,
-          content: activity.description || `活动「${activity.name}」已发布，欢迎参与。`,
+          title: notifTitle,
+          content: notifContent,
           type: 'ACTIVITY' as any,
           relatedId: id,
           relatedType: 'Activity',

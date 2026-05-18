@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { CreateEntityDto, UpdateEntityDto, CreateLicenseDto, CreatePhotoDto } from './dto/entity.dto';
+import { CreateEntityDto, UpdateEntityDto, CreateLicenseDto, UpdateLicenseDto, CreatePhotoDto } from './dto/entity.dto';
 
 @Injectable()
 export class EntitiesService {
@@ -81,10 +81,13 @@ export class EntitiesService {
   // 许可备案
   async findLicenses(entityId: string) { return this.prisma.bizLicense.findMany({ where: { entityId } }); }
   async addLicense(entityId: string, dto: CreateLicenseDto) { return this.prisma.bizLicense.create({ data: { ...dto, entityId } }); }
+  async updateLicense(id: string, dto: UpdateLicenseDto) { return this.prisma.bizLicense.update({ where: { id }, data: dto }); }
+  async removeLicense(id: string) { return this.prisma.bizLicense.delete({ where: { id } }); }
 
   // 照片
   async findPhotos(entityId: string) { return this.prisma.entityPhoto.findMany({ where: { entityId } }); }
   async addPhoto(entityId: string, dto: CreatePhotoDto) { return this.prisma.entityPhoto.create({ data: { ...dto, entityId } }); }
+  async addPhotos(entityId: string, photos: CreatePhotoDto[]) { return this.prisma.entityPhoto.createMany({ data: photos.map((p) => ({ ...p, entityId })) }); }
   async removePhoto(id: string) { return this.prisma.entityPhoto.delete({ where: { id } }); }
 
   // 统计

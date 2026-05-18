@@ -1,10 +1,42 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { CreateScreeningRecordDto, UpdateScreeningRecordDto } from './dto/screenings.dto';
+import { RiskLevel } from '@prisma/client';
 
 @Injectable()
 export class ScreeningsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /** Calculate risk level based on recent screening + inspection records */
+  private async recalcEntityRisk(entityId: string) {
+    const [screenings, inspections] = await Promise.all([
+      this.prisma.screeningRecord.findMany({ where: { entityId }, orderBy: { screenedAt: 'desc' }, take: 5, select: { riskLevel: true } }),
+      this.prisma.inspectionRecord.findMany({ where: { entityId }, orderBy: { inspectedAt: 'desc' }, take: 5, select: { result: true, totalScore: true } }),
+    ]);
+
+    // Screening risk score: HIGH=0, HIGHER=25, MEDIUM=50, LOW=75, UNRATED/LOWER=100
+    const riskScoreMap: Record<string, number> = {
+      HIGH: 0, HIGHER: 25, MEDIUM: 50, LOW: 75, LOWER: 100, UNRATED: 100,
+    };
+    const screeningAvg = screenings.length
+      ? screenings.reduce((s, r) => s + (riskScoreMap[r.riskLevel as string] ?? 100), 0) / screenings.length
+      : 100;
+    const inspectionAvg = inspections.length
+      ? inspections.reduce((s, r) => s + (r.totalScore ?? 100), 0) / inspections.length
+      : 100;
+    const avgScore = (screeningAvg * 0.4 + inspectionAvg * 0.6); // screenings weight 40%, inspections weight 60%
+
+
+    let riskLevel: RiskLevel;
+    if (avgScore < 40) riskLevel = RiskLevel.HIGH;
+    else if (avgScore < 60) riskLevel = RiskLevel.HIGHER;
+    else if (avgScore < 75) riskLevel = RiskLevel.MEDIUM;
+    else if (avgScore < 90) riskLevel = RiskLevel.LOWER;
+    else riskLevel = RiskLevel.LOW;
+
+
+    await this.prisma.bizEntity.update({ where: { id: entityId }, data: { riskLevel, riskRatedAt: new Date() } });
+  }
 
   async create(dto: CreateScreeningRecordDto, userId: string) {
     const record = await this.prisma.screeningRecord.create({
@@ -21,16 +53,8 @@ export class ScreeningsService {
       },
       include: { entity: true, screener: true, plan: true },
     });
-    // Auto-update entity risk level from screening result
-    if (dto.riskLevel) {
-      await this.prisma.bizEntity.update({
-        where: { id: dto.entityId },
-        data: {
-          riskLevel: dto.riskLevel as any,
-          riskRatedAt: new Date(),
-        },
-      });
-    }
+    // Auto-recalculate entity risk level
+    this.recalcEntityRisk(dto.entityId).catch(() => {});
     return record;
   }
 
@@ -80,16 +104,8 @@ export class ScreeningsService {
       },
       include: { entity: true, screener: true, plan: true },
     });
-    // Auto-update entity risk level from screening result
-    if (dto.riskLevel) {
-      await this.prisma.bizEntity.update({
-        where: { id: existing.entityId },
-        data: {
-          riskLevel: dto.riskLevel as any,
-          riskRatedAt: new Date(),
-        },
-      });
-    }
+    // Auto-recalculate entity risk level
+    this.recalcEntityRisk(existing.entityId).catch(() => {});
     return record;
   }
 
