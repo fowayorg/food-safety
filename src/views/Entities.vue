@@ -6,6 +6,7 @@
       <v-spacer />
       <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="搜索" density="compact" variant="outlined" hide-details class="me-2" style="max-width: 300px" />
       <v-btn v-if="selected.length" color="error" prepend-icon="mdi-delete-sweep" class="me-2" @click="handleBatchDelete">批量删除 ({{ selected.length }})</v-btn>
+      <v-btn color="success" prepend-icon="mdi-file-export" variant="outlined" class="me-2" @click="handleExport">导出Excel</v-btn>
       <v-btn color="primary" prepend-icon="mdi-plus" @click="openDialog()">新增主体</v-btn>
     </v-card-title>
     <v-data-table v-model="selected" :headers="headers" :items="entities" :loading="loading" :search="search" :return-object="true" show-select class="elevation-0">
@@ -63,7 +64,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { entitiesApi, streetsApi } from '../services/api'
+import { entitiesApi, streetsApi, exportsApi } from '../services/api'
 import QRCode from 'qrcode'
 
 const search = ref('')
@@ -195,6 +196,10 @@ const downloadQR = () => {
   link.download = `${qrEntityName.value}-二维码.png`
   link.href = qrCodeDataUrl.value
   link.click()
+}
+
+const handleExport = () => {
+  exportsApi.download('entities').catch(e => alert('导出失败: ' + (e?.message || e)))
 }
 
 const handleBatchDelete = async () => {

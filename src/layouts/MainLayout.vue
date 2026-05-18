@@ -61,6 +61,8 @@ const currentUser = ref(localStorage.getItem('username') || '管理员')
 const menuItems = [
   { title: '仪表盘', icon: 'mdi-view-dashboard', to: '/dashboard' },
   { title: '经营主体', icon: 'mdi-store', to: '/entities' },
+  { title: '许可备案', icon: 'mdi-card-account-details', to: '/licenses' },
+  { title: '照片管理', icon: 'mdi-image-multiple', to: '/photos' },
   { title: '监督检查', icon: 'mdi-clipboard-check', to: '/inspections' },
   { title: '检查计划', icon: 'mdi-calendar-check', to: '/inspection-plans' },
   { title: '检查模板', icon: 'mdi-file-document', to: '/inspection-templates' },
@@ -68,6 +70,7 @@ const menuItems = [
   { title: '投诉举报', icon: 'mdi-phone', to: '/complaints' },
   { title: '整改管理', icon: 'mdi-wrench', to: '/rectifications' },
   { title: '社会共治', icon: 'mdi-account-group', to: '/activities' },
+  { title: '活动分析', icon: 'mdi-chart-pie', to: '/activities-stats' },
   { title: '自查自纠', icon: 'mdi-checkbox-marked', to: '/self-inspections' },
   { title: '信息更正', icon: 'mdi-pencil-circle', to: '/info-corrections' },
   { title: '意见反馈', icon: 'mdi-message-draw', to: '/feedback' },

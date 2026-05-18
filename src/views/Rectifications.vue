@@ -7,6 +7,7 @@
       <v-text-field v-model="search" prepend-inner-icon="mdi-magnify" label="搜索" density="compact" variant="outlined" hide-details class="me-2" style="max-width: 300px" />
       <v-btn v-if="selected.length" color="error" prepend-icon="mdi-delete-sweep" class="me-2" @click="handleBatchDelete">批量删除 ({{ selected.length }})</v-btn>
       <v-btn v-if="selected.length && selected.every((i: any) => i.status === 'SUBMITTED')" color="warning" prepend-icon="mdi-gavel" class="me-2" @click="openBatchReviewDialog">批量审核 ({{ selected.length }})</v-btn>
+      <v-btn color="success" prepend-icon="mdi-file-export" variant="outlined" class="me-2" @click="exportsApi.download('rectifications')">导出</v-btn>
       <v-btn color="primary" @click="openCreateDialog">新建整改</v-btn>
     </v-card-title>
     <v-data-table v-model="selected" :headers="headers" :items="items" :loading="loading" :search="search" :return-object="true" show-select class="elevation-0">
@@ -124,7 +125,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { rectificationsApi } from '../services/api'
+import { rectificationsApi, exportsApi } from '../services/api'
 
 const search = ref('')
 const loading = ref(false)

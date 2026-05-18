@@ -78,6 +78,16 @@ export const entitiesApi = {
   stats: () => api.get('/entities/stats'),
   search: (keyword: string) => api.get('/entities/search', { params: { keyword } }),
   getPublic: (id: number) => api.get(`/entities/${id}/public`),
+  // 许可备案
+  getLicenses: (entityId: number) => api.get(`/entities/${entityId}/licenses`),
+  addLicense: (entityId: number, data: any) => api.post(`/entities/${entityId}/licenses`, data),
+  updateLicense: (entityId: number, licenseId: string, data: any) => api.put(`/entities/${entityId}/licenses/${licenseId}`, data),
+  removeLicense: (entityId: number, licenseId: string) => api.delete(`/entities/${entityId}/licenses/${licenseId}`),
+  // 照片管理
+  getPhotos: (entityId: number) => api.get(`/entities/${entityId}/photos`),
+  addPhoto: (entityId: number, data: any) => api.post(`/entities/${entityId}/photos`, data),
+  addPhotos: (entityId: number, photos: any[]) => api.post(`/entities/${entityId}/photos/batch`, photos),
+  removePhoto: (entityId: number, photoId: string) => api.delete(`/entities/${entityId}/photos/${photoId}`),
 }
 
 export const qrcodesApi = {
@@ -150,7 +160,8 @@ export const activitiesApi = {
   list: (params?: any) => api.get('/activities', { params }),
   get: (id: number) => api.get(`/activities/${id}`),
   create: (data: any) => api.post('/activities', data),
-  update: (id: number, data: any) => api.patch(`/activities/${id}`, data),
+  update: (id: number, data: any) => api.put(`/activities/${id}`, data),
+  publish: (id: number) => api.post(`/activities/${id}/publish`),
   delete: (id: number) => api.delete(`/activities/${id}`),
 }
 
@@ -224,4 +235,26 @@ export const auditLogsApi = {
   list: (params?: any) => api.get('/audit-logs', { params }),
   get: (id: string) => api.get(`/audit-logs/${id}`),
   stats: () => api.get('/audit-logs/stats'),
+}
+
+export const exportsApi = {
+  download: (type: string, params?: Record<string, string>) => {
+    const token = localStorage.getItem('token')
+    const query = params ? '?' + new URLSearchParams(params).toString() : ''
+    const url = `${API_BASE_URL}/exports/${type}${query}`
+    const a = document.createElement('a')
+    a.href = url
+    // Use fetch to get blob with auth header
+    return fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.blob())
+      .then(blob => {
+        const objectUrl = URL.createObjectURL(blob)
+        a.href = objectUrl
+        a.download = `${type}_${new Date().toISOString().slice(0,10)}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(objectUrl)
+      })
+  },
 }
