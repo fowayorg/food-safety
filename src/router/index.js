@@ -4,6 +4,7 @@ const routes = [
   { path: '/', component: () => import('@/pages/index/index.vue') },
   { path: '/login', component: () => import('@/pages/login/index.vue') },
   { path: '/entity/:id', component: () => import('@/pages/entity/index.vue') },
+  { path: '/guarantee/:id', component: () => import('@/pages/guarantee/index.vue') },
   { path: '/inspection', component: () => import('@/pages/inspection/index.vue') },
   { path: '/inspection/:id', component: () => import('@/pages/inspection/execute.vue') },
   { path: '/screening', component: () => import('@/pages/screening/index.vue') },
@@ -20,6 +21,8 @@ const routes = [
   { path: '/profile', component: () => import('@/pages/profile/index.vue') },
   { path: '/info-correction', component: () => import('@/pages/info-correction/index.vue') },
   { path: '/info-correction/submit', name: 'InfoCorrectionSubmit', component: () => import('@/pages/info-correction/submit.vue') },
+  { path: '/rectification', component: () => import('@/pages/rectification/index.vue') },
+  { path: '/rectification/:id', component: () => import('@/pages/rectification/execute.vue') },
   { path: '/info-correction/:id', name: 'InfoCorrectionDetail', component: () => import('@/pages/info-correction/detail.vue') },
 ]
 

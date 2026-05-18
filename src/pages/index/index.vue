@@ -49,6 +49,18 @@
           </div>
           <span class="menu-text">自查自纠</span>
         </div>
+        <div class="menu-item" @click="goPage('/rectification')">
+          <div class="menu-icon" style="background:#FFF3E0">
+            <van-icon name="edit" size="24" color="#FF9800" />
+          </div>
+          <span class="menu-text">整改任务</span>
+        </div>
+        <div class="menu-item" @click="goPage('/info-correction')">
+          <div class="menu-icon" style="background:#E0F7FA">
+            <van-icon name="edit-pen" size="24" color="#00BCD4" />
+          </div>
+          <span class="menu-text">信息更正</span>
+        </div>
         <div class="menu-item" @click="goPage('/complaint/submit')">
           <div class="menu-icon" style="background:#FFF3E0">
             <van-icon name="warning-o" size="24" color="#FF9800" />

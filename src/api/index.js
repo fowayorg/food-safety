@@ -71,7 +71,9 @@ export const selfInspectionsApi = {
 export const activitiesApi = {
   list: (params) => api.get('/activities', { params }),
   get: (id) => api.get(`/activities/${id}`),
-  join: (id) => api.post(`/activities/${id}/join`),
+  participate: (id, data) => api.post(`/activities/${id}/participate`, data),
+  stats: (id) => api.get(`/activities/${id}/stats`),
+  participants: (id) => api.get(`/activities/${id}/participants`),
   getMyParticipations: (params) => api.get('/activities/my/participations', { params }),
 }
 
@@ -93,4 +95,10 @@ export const infoCorrectionsApi = {
   list: (params) => api.get('/info-corrections', { params }),
   get: (id) => api.get(`/info-corrections/${id}`),
   create: (data) => api.post('/info-corrections', data),
+}
+
+export const rectificationsApi = {
+  list: (params) => api.get('/rectifications', { params }),
+  get: (id) => api.get(`/rectifications/${id}`),
+  submit: (id, data) => api.post(`/rectifications/${id}/submit`, data),
 }
